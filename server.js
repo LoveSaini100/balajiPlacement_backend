@@ -87,8 +87,8 @@ app.use('/uploads', express.static(uploadsDir, {
   }
 }));
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Health check endpoints
+const healthHandler = (req, res) => {
   res.status(200).json({
     status: 'OK',
     domain: 'jobsetu.net',
@@ -97,15 +97,28 @@ app.get('/api/health', (req, res) => {
     environment: process.env.NODE_ENV || 'production',
     time: new Date().toISOString()
   });
-});
+};
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
 
-// API Routes
+// API Routes (Mounted on both /api/* and /* for full Vercel serverless compatibility)
 app.use('/api/auth', authRoutes);
+app.use('/auth', authRoutes);
+
 app.use('/api/jobs', jobRoutes);
+app.use('/jobs', jobRoutes);
+
 app.use('/api/applications', applicationRoutes);
+app.use('/applications', applicationRoutes);
+
 app.use('/api/messages', messageRoutes);
+app.use('/messages', messageRoutes);
+
 app.use('/api/admin', adminRoutes);
+app.use('/admin', adminRoutes);
+
 app.use('/api/resume', resumeRoutes);
+app.use('/resume', resumeRoutes);
 
 // Serve static React build files in production (if frontend/dist exists)
 const frontendDistPath = path.resolve(__dirname, '../frontend/dist');
