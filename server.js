@@ -16,6 +16,16 @@ connectDB();
 
 const app = express();
 
+// Middleware to ensure DB connection is ready on serverless cold starts
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error('DB connect middleware error:', err);
+  }
+  next();
+});
+
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -44,7 +54,7 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, curl, server-to-server)
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.jobsetu.net')) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.jobsetu.net') || origin.includes('vercel.app')) {
       return callback(null, true);
     }
     return callback(null, true); // Fallback permissive for smooth operation
@@ -54,6 +64,17 @@ app.use(cors({
 
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+
+// Root welcome endpoint for status check
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: '🚀 Balaji Placements Backend API is live and operational',
+    health: '/api/health',
+    environment: process.env.NODE_ENV || 'production',
+    time: new Date().toISOString()
+  });
+});
 
 // Serve static uploads (resumes and attachments) with inline disposition and CORS
 app.use('/uploads', express.static(uploadsDir, {
